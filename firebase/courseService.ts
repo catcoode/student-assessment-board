@@ -2,6 +2,7 @@ import { collection, addDoc, getDocs, doc, updateDoc, deleteDoc } from "firebase
 import { db } from "./firebaseConfig";  // Assuming this imports your Firestore instance
 import { CourseProps } from "../components/Course"; // Import the CourseProps type
 
+const coursesCollection = collection(db, "courses");
 // 📌 Add a new course
 export const addCourse = async (course: Omit<CourseProps, "id">) => {
     try {

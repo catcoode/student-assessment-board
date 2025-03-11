@@ -2,6 +2,9 @@ import { collection, addDoc, getDocs, doc, updateDoc, deleteDoc } from "firebase
 import { db } from "./firebaseConfig";
 import { StudentProps } from "../components/Student";
 
+const studentsCollection = collection(db, "students");
+
+
 export const addStudent = async (student: Omit<StudentProps, "id">) => {
     try {
         const docRef = await addDoc(collection(db, "students"), student);
