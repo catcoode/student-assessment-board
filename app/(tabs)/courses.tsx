@@ -8,32 +8,27 @@ import { addCourse } from '@/firebase/courseService'; // Import the addStudent f
 
 export default function CourseScreen() {
     // State to store student data
-    const [courseName, setCourseName] = useState('');
-    const [courseCode, setCourseCode] = useState('');
-    const [courseDescription, setCourseDescription] = useState('');
-    const [credits, setCredits] = useState('');
-    const [teacherName, setTeacherName] = useState('');
+    const [name, setName] = useState('');
+    const [code, setCode] = useState('');
+    const [description, setDescription] = useState('');
+
 
     // Function to handle form submission
     // Function to handle form submission for adding a course
     const handleAddCourse = async () => {
         const newCourse = {
-            courseName,
-            courseCode,
-            courseDescription,
-            credits: parseInt(credits), // Convert credits to an integer
-            teacherName,
+            name,
+            code,
+            description,
         };
 
         // Call addCourse to add the new course to Firestore
         await addCourse(newCourse);
 
         // Reset the input fields after submission
-        setCourseName('');
-        setCourseCode('');
-        setCourseDescription('');
-        setCredits('');
-        setTeacherName('');
+        setName('');
+        setCode('');
+        setDescription('');
     };
 
     return (
@@ -55,33 +50,20 @@ export default function CourseScreen() {
             <ThemedView style={styles.stepContainer}>
                 <TextInput
                     placeholder="Course Name"
-                    value={courseName}
-                    onChangeText={setCourseName}
+                    value={name}
+                    onChangeText={setName}
                     style={styles.input}
                 />
                 <TextInput
                     placeholder="Course Code"
-                    value={courseCode}
-                    onChangeText={setCourseCode}
+                    value={code}
+                    onChangeText={setCode}
                     style={styles.input}
                 />
                 <TextInput
                     placeholder="Course Description"
-                    value={courseDescription}
-                    onChangeText={setCourseDescription}
-                    style={styles.input}
-                />
-                <TextInput
-                    placeholder="Credits"
-                    value={credits}
-                    onChangeText={setCredits}
-                    style={styles.input}
-                    keyboardType="numeric"
-                />
-                <TextInput
-                    placeholder="Teacher Name"
-                    value={teacherName}
-                    onChangeText={setTeacherName}
+                    value={description}
+                    onChangeText={setDescription}
                     style={styles.input}
                 />
                 <Button title="Add Course" onPress={handleAddCourse} />

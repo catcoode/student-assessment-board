@@ -8,26 +8,25 @@ import { addStudent } from '@/firebase/studentService'; // Import the addStudent
 
 export default function HomeScreen() {
     // State to store student data
-    const [studentName, setStudentName] = useState('');
+    const [firstName, setFirstName] = useState('');
+    const [lastName, setLastName] = useState('');
     const [studentEmail, setStudentEmail] = useState('');
-    const [studentDateOfBirth, setStudentDateOfBirth] = useState('');
 
     // Function to handle form submission
     const handleAddStudent = async () => {
         const newStudent = {
-            studentName,
+            firstName,
+            lastName,
             email: studentEmail,
-            dateOfBirth: new Date(studentDateOfBirth),
-            courses: [], // Empty array to hold courses
         };
 
         // Call addStudent to add the new student to Firestore
         await addStudent(newStudent);
 
         // Reset the input fields after submission
-        setStudentName('');
+        setFirstName('');
+        setLastName('');
         setStudentEmail('');
-        setStudentDateOfBirth('');
     };
 
 
@@ -48,9 +47,15 @@ export default function HomeScreen() {
             {/* Form to add a new student */}
             <ThemedView style={styles.stepContainer}>
                 <TextInput
-                    placeholder="Student Name"
-                    value={studentName}
-                    onChangeText={setStudentName}
+                    placeholder="First Name"
+                    value={firstName}
+                    onChangeText={setFirstName}
+                    style={styles.input}
+                />
+                <TextInput
+                    placeholder="Last Name"
+                    value={lastName}
+                    onChangeText={setLastName}
                     style={styles.input}
                 />
                 <TextInput
@@ -59,13 +64,6 @@ export default function HomeScreen() {
                     onChangeText={setStudentEmail}
                     style={styles.input}
                 />
-                <TextInput
-                    placeholder="Date of Birth (YYYY-MM-DD)"
-                    value={studentDateOfBirth}
-                    onChangeText={setStudentDateOfBirth}
-                    style={styles.input}
-                />
-
                 <Button title="Add Student" onPress={handleAddStudent} />
             </ThemedView>
         </ParallaxScrollView>
