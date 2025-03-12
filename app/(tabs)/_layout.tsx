@@ -40,11 +40,12 @@ export default function TabLayout() {
           tabBarIcon: ({ color }) => <IconSymbol size={28} name="toilet.fill" color={color} />,
         }}
       />
+
         <Tabs.Screen
-            name="profilePage"
+            name="grade"
             options={{
-                title: 'Profile Page',
-                tabBarIcon: ({ color }) => <IconSymbol size={28} name="paperplane.fill" color={color} />,
+                title: 'Grades',
+                tabBarIcon: ({ color }) => <IconSymbol size={28} name="graduationcap.fill" color={color} />,
             }}
         />
 

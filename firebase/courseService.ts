@@ -12,3 +12,13 @@ export const addCourse = async (course: Omit<CourseProps, "id">) => {
         console.error("Error adding course:", error);
     }
 };
+
+// Get all courses
+
+export const getCourses = async (): Promise<{ id: string; title: string }[]> => {
+    const querySnapshot = await getDocs(collection(db, "courses"));
+    return querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        title: doc.data().name || "", // Ensure 'name' exists
+    }));
+};
