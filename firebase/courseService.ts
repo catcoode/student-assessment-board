@@ -12,3 +12,16 @@ export const addCourse = async (course: Omit<CourseProps, "id">) => {
         console.error("Error adding course:", error);
     }
 };
+
+// Update Course
+export const updateCourse = async (courseId: string, updatedCourse: Partial<CourseProps>) => {
+    try {
+        const courseRef = doc(db, "courses", courseId);
+        await updateDoc(courseRef, updatedCourse);
+        console.log("Course updated successfully:", courseId);
+        return true;
+    } catch (error) {
+        console.error("Error updating course:", error);
+        return false;
+    }
+};
