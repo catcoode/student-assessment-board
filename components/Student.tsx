@@ -24,6 +24,7 @@ const styles = StyleSheet.create({
         marginVertical: 5,
         borderRadius: 5,
         width: 80,
+
     },
     studentName: {
         fontSize: 18,
