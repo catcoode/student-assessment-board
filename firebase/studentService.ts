@@ -23,6 +23,7 @@ export const updateStudent = async (id: string, updatedStudent: Partial<StudentP
     } catch (error) {
         console.error("Error updating student:", error);
     }
+};
 
 export const getStudents = async (): Promise<{ id: string; name: string }[]> => {
     const querySnapshot = await getDocs(collection(db, "students"));
