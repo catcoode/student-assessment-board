@@ -34,3 +34,16 @@ export const updateCourse = async (courseId: string, updatedCourse: Partial<Cour
         return false;
     }
 };
+
+// Delete Course
+export const deleteCourse = async (courseId: string) => {
+    try {
+        const courseRef = doc(db, "courses", courseId);
+        await deleteDoc(courseRef);
+        console.log("Course deleted successfully:", courseId);
+        return true;
+    } catch (error) {
+        console.error("Error deleting course:", error);
+        return false;
+    }
+};
