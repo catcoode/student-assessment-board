@@ -6,7 +6,6 @@ export type StudentProps = {
     email: string;
 };
 
-
 export default function Student({ firstName, lastName, email }: StudentProps) {
     // @ts-ignore
     return (
