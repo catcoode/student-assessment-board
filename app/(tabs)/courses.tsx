@@ -5,6 +5,7 @@ import ParallaxScrollView from '@/components/ParallaxScrollView';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { addCourse } from '@/firebase/courseService'; // Import the addStudent function
+import { collection, query, where, getDocs } from "@/firebase/firestore";
 
 export default function CourseScreen() {
     // State to store student data
@@ -30,6 +31,10 @@ export default function CourseScreen() {
         setCode('');
         setDescription('');
     };
+
+
+
+
 
     return (
         <ParallaxScrollView
@@ -96,5 +101,6 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         padding: 8,
         marginBottom: 8,
+        backgroundColor: "white"
     },
 });

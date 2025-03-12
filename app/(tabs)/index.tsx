@@ -6,6 +6,7 @@ import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { addStudent } from '@/firebase/studentService'; // Import the addStudent function
 
+
 export default function HomeScreen() {
     // State to store student data
     const [firstName, setFirstName] = useState('');
@@ -94,5 +95,6 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         padding: 8,
         marginBottom: 8,
+        backgroundColor: "white"
     },
 });
