@@ -1,23 +1,26 @@
 import React, { useState, useEffect } from "react";
-import {Text, View, FlatList, TextInput, StyleSheet, Button, Modal, TouchableOpacity} from "react-native";
+import { Text, View, FlatList, TextInput, StyleSheet, Button, Modal, TouchableOpacity } from "react-native";
 import useFetchCollection from "@/hooks/useFetchCollection"; // Hook to fetch students
 import { updateStudent } from "@/firebase/studentService"; // Import the updateStudent function
 import { StudentProps } from "@/components/Student"; // Import the StudentProps type
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "@/firebase/firebaseConfig";
+import { Alert } from "react-native";
+import { deleteStudent} from "@/firebase/studentService";
+
 
 const StudentsList = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const { data: students, loading, error } = useFetchCollection("students");
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
-  const [editingStudent, setEditingStudent] = useState<{id: string} & StudentProps | null>(null);
+  const [editingStudent, setEditingStudent] = useState<StudentProps & { id: string } | null>(null);
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
     email: ""
   });
 
-  const [studentData, setStudentData] = useState([]);
+  const [studentData, setStudentData] = useState<(StudentProps & { id: string })[]>([]);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   // Use the initial data from useFetchCollection
@@ -28,11 +31,12 @@ const StudentsList = () => {
   }, [students]);
 
   // Function to manually refresh data
+  // Function to manually refresh data
   const refreshData = async () => {
     setIsRefreshing(true);
     try {
-      const studentsCollection = collection(db, "students");
-      const querySnapshot = await getDocs(studentsCollection);
+      const coursesCollection = collection(db, "students");
+      const querySnapshot = await getDocs(coursesCollection);
       const fetchedStudents = [];
       querySnapshot.forEach((doc) => {
         fetchedStudents.push({
@@ -42,13 +46,13 @@ const StudentsList = () => {
       });
       setStudentData(fetchedStudents);
     } catch (error) {
-      console.error("Error refreshing students:", error);
+      console.error("Error refreshing courses:", error);
     } finally {
       setIsRefreshing(false);
     }
   };
 
-  const handleEditPress = (student) => {
+  const handleEditPress = (student: StudentProps & { id: string }) => {
     setEditingStudent(student);
     setFormData({
       firstName: student.firstName,
@@ -65,14 +69,42 @@ const StudentsList = () => {
         // Close the modal and refresh the data
         setIsEditModalVisible(false);
         refreshData();
-      } catch (error) {
-        // Handle error (you could add more sophisticated error handling)
+      } catch (error: any) {
+        // Handle error with proper typing
         alert("Failed to update student: " + error.message);
       }
     }
   };
 
-  const handleInputChange = (field, value) => {
+  const handleDeletePress = (student) => {
+    // Show confirmation dialog
+    Alert.alert(
+        "Delete student",
+        `Are you sure you want to delete the student "${student.firstName} ${student.lastName}"?`,
+        [
+          {
+            text: "Cancel",
+            style: "cancel"
+          },
+          {
+            text: "Delete",
+            style: "destructive",
+            onPress: async () => {
+              const deleted = await deleteStudent(student.id);
+              if (deleted) {
+                // Refresh the data after successful deletion
+                refreshData();
+              } else {
+                // Handle error
+                Alert.alert("Error", "Failed to delete course");
+              }
+            }
+          }
+        ]
+    );
+  };
+
+  const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({
       ...prev,
       [field]: value
@@ -104,8 +136,20 @@ const StudentsList = () => {
             renderItem={({ item }) => (
                 <View style={styles.studentCard}>
                   <Text style={styles.studentName}>{item.firstName} {item.lastName}</Text>
-                  <Text style={styles.email}>{item.email}</Text>
-                  <Button title="Edit student" onPress={() => handleEditPress(item)} />
+                  <Text style={styles.studentEmail}>{item.email}</Text>
+                  <TouchableOpacity
+                      style={styles.editButton}
+                      onPress={() => handleEditPress(item)}
+                  >
+                    <Text style={styles.editButtonText}>Edit</Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                      style={styles.deleteButton}
+                      onPress={() => handleDeletePress(item)}
+                  >
+                    <Text style={styles.buttonText}>Remove</Text>
+                  </TouchableOpacity>
                 </View>
             )}
             refreshing={isRefreshing}
@@ -143,7 +187,6 @@ const StudentsList = () => {
                   value={formData.email}
                   onChangeText={(text) => handleInputChange("email", text)}
               />
-
               <View style={styles.buttonContainer}>
                 <TouchableOpacity
                     style={[styles.modalButton, styles.cancelButton]}
@@ -188,7 +231,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     width: "100%",
   },
-  courseCard: {
+  studentCard: {
     width: 350,
     backgroundColor: "#f0f0f0",
     padding: 15,
@@ -196,11 +239,11 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     alignItems: "center",
   },
-  courseName: {
+  studentName: {
     fontSize: 18,
     fontWeight: "bold",
   },
-  description: {
+  studentEmail: {
     fontSize: 14,
     color: "blue",
     marginBottom: 10,
@@ -273,6 +316,24 @@ const styles = StyleSheet.create({
   },
   saveButton: {
     backgroundColor: "#4ecdc4",
+  },
+  buttonText: {
+    color: "white",
+    fontWeight: "bold",
+  },
+  buttonRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    width: "60%",
+    marginTop: 5,
+  },
+  deleteButton: {
+    backgroundColor: "#e74c3c",
+    paddingHorizontal: 15,
+    paddingVertical: 8,
+    borderRadius: 5,
+    minWidth: 80,
+    alignItems: "center",
   },
   buttonText: {
     color: "white",
