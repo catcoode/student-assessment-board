@@ -9,9 +9,16 @@ import { Alert } from "react-native";
 import { deleteStudent} from "@/firebase/studentService";
 
 
+interface Student {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string; // Add other properties if needed
+}
+
 const StudentsList = () => {
   const [searchQuery, setSearchQuery] = useState("");
-  const { data: students, loading, error } = useFetchCollection("students");
+  const { data: students, loading, error } = useFetchCollection<Student>("students");
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
   const [editingStudent, setEditingStudent] = useState<StudentProps & { id: string } | null>(null);
   const [formData, setFormData] = useState({
@@ -37,13 +44,11 @@ const StudentsList = () => {
     try {
       const coursesCollection = collection(db, "students");
       const querySnapshot = await getDocs(coursesCollection);
-      const fetchedStudents = [];
-      querySnapshot.forEach((doc) => {
-        fetchedStudents.push({
-          id: doc.id,
-          ...doc.data()
-        });
-      });
+      const fetchedStudents: Student[] = querySnapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...(doc.data() as Omit<Student, "id">), // ✅ Type assertion
+      }));
+
       setStudentData(fetchedStudents);
     } catch (error) {
       console.error("Error refreshing courses:", error);
@@ -76,7 +81,7 @@ const StudentsList = () => {
     }
   };
 
-  const handleDeletePress = (student) => {
+  const handleDeletePress = (student: StudentProps & { id: string }) => {
     // Show confirmation dialog
     Alert.alert(
         "Delete student",
@@ -114,10 +119,9 @@ const StudentsList = () => {
   if (loading) return <Text>Loading...</Text>;
   if (error) return <Text>Error: {error.message}</Text>;
 
-  // Use studentData instead of students for filtering
-  const filteredStudents = studentData.filter(student =>
-      student.firstName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      student.lastName.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredStudents: Student[] = students.filter(student =>
+    student.firstName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    student.lastName.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   return (
@@ -336,9 +340,5 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     minWidth: 80,
     alignItems: "center",
-  },
-  buttonText: {
-    color: "white",
-    fontWeight: "bold",
   },
 });
