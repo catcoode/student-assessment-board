@@ -131,6 +131,7 @@ const StudentsList = () => {
             placeholder="Search by name..."
             value={searchQuery}
             onChangeText={setSearchQuery}
+            placeholderTextColor="#666"
         />
 
         <FlatList
@@ -324,6 +325,7 @@ const styles = StyleSheet.create({
   buttonText: {
     color: "white",
     fontWeight: "bold",
+
   },
   buttonRow: {
     flexDirection: "row",
