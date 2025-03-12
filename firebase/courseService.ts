@@ -1,6 +1,7 @@
-import { collection, addDoc, getDocs, doc, updateDoc, deleteDoc } from "firebase/firestore";
+import { collection, addDoc, getDocs, doc, updateDoc, deleteDoc,query, where } from "firebase/firestore";
 import { db } from "./firebaseConfig";  // Assuming this imports your Firestore instance
 import { CourseProps } from "../components/Course"; // Import the CourseProps type
+
 
 const coursesCollection = collection(db, "courses");
 // 📌 Add a new course
@@ -36,14 +37,35 @@ export const updateCourse = async (courseId: string, updatedCourse: Partial<Cour
 };
 
 // Delete Course
+
 export const deleteCourse = async (courseId: string) => {
     try {
+        // Reference to the grades collection
+        const gradesRef = collection(db, "grades");
+
+        // Query to find all grades associated with the courseId
+        const q = query(gradesRef, where("courseId", "==", courseId));
+        const querySnapshot = await getDocs(q);
+
+        // Delete each grade document found
+        const deletePromises = querySnapshot.docs.map((docSnapshot) =>
+            deleteDoc(doc(db, "grades", docSnapshot.id))
+        );
+
+        // Wait for all deletions to complete
+        await Promise.all(deletePromises);
+
+        console.log(`Deleted ${querySnapshot.size} associated grades.`);
+
+        // Now delete the course itself
         const courseRef = doc(db, "courses", courseId);
         await deleteDoc(courseRef);
+
         console.log("Course deleted successfully:", courseId);
         return true;
     } catch (error) {
-        console.error("Error deleting course:", error);
+        console.error("Error deleting course and associated grades:", error);
         return false;
     }
 };
+
