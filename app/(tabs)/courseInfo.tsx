@@ -1,11 +1,29 @@
 import React, { useState, useEffect } from "react";
-
-import { Text, View, FlatList, TextInput, StyleSheet, TouchableOpacity, Modal, Alert, Dimensions } from "react-native";
+import {Text, View, FlatList, TextInput, StyleSheet, TouchableOpacity, Modal, Alert, Dimensions } from "react-native";
 import useFetchCollection from "@/hooks/useFetchCollection"; // Hook to fetch students
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "@/firebase/firebaseConfig";
 import { updateCourse, deleteCourse } from "@/firebase/courseService"; // Import the updateCourse and deleteCourse functions
 import { CourseProps } from "@/components/Course"; // Import the CourseProps type
+import firebase from "firebase/compat";
+import DocumentData = firebase.firestore.DocumentData;
+
+interface Course extends CourseProps {
+  id: string;
+}
+
+interface Grade {
+  id: string;
+  courseId: string;
+  grade: string;
+}
+
+interface GradeDistribution {
+  [grade: number]: number; // Grade values (1-5) mapped to counts
+}
+type GradeDistributions = Record<string, GradeDistribution>; // Course ID mapped to grade distributions
+
+
 import { BarChart } from "react-native-chart-kit";
 
 const screenWidth = Dimensions.get("window").width;
@@ -13,19 +31,18 @@ const screenWidth = Dimensions.get("window").width;
 
 // Attributes
 const CourseList = () => {
-  // 1. Declare ALL hooks at the top, before any conditional logic
   const [searchQuery, setSearchQuery] = useState("");
-  const { data: courses, loading, error } = useFetchCollection("courses");
-  const { data: grades, loading: gradesLoading, error: gradesError } = useFetchCollection("grades");
-  const [gradeDistributions, setGradeDistributions] = useState({});
+  const { data: courses, loading, error } = useFetchCollection<Course>("courses");
+  const { data: grades, loading: gradesLoading, error: gradesError } = useFetchCollection<Grade>("grades");
+  const [gradeDistributions, setGradeDistributions] = useState<GradeDistributions>({});
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
-  const [editingCourse, setEditingCourse] = useState(null);
+  const [editingCourse, setEditingCourse] = useState<{id: string} & CourseProps | null>(null);
   const [formData, setFormData] = useState({
     name: "",
     code: "",
     description: ""
   });
-  const [courseData, setCourseData] = useState([]);
+  const [courseData, setCourseData] = useState<DocumentData[]>([]);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   // 2. Move ALL useEffect hooks here, before any conditionals
@@ -33,7 +50,7 @@ const CourseList = () => {
     if (!courses || !grades || courses.length === 0 || grades.length === 0) return;
 
     console.log("Processing grades:", grades.length, "items");
-    const distributions = {};
+    const distributions: Record<string, Record<number, number>> = {};
 
     courses.forEach(course => {
       distributions[course.id] = {1: 0, 2: 0, 3: 0, 4: 0, 5: 0};
@@ -73,19 +90,17 @@ const CourseList = () => {
     }
   }, [courses]);
 
-  // 3. Helper functions
+  // Function to manually refresh data
   const refreshData = async () => {
     setIsRefreshing(true);
     try {
       const coursesCollection = collection(db, "courses");
       const querySnapshot = await getDocs(coursesCollection);
-      const fetchedCourses = [];
-      querySnapshot.forEach((doc) => {
-        fetchedCourses.push({
-          id: doc.id,
-          ...doc.data()
-        });
-      });
+      const fetchedCourses: Course[] = querySnapshot.docs.map(doc => ({
+        id: doc.id,  // Ensure id is included
+        ...(doc.data() as Omit<Course, "id">) // Type assertion
+      }));
+
       setCourseData(fetchedCourses);
     } catch (error) {
       console.error("Error refreshing courses:", error);
@@ -94,19 +109,21 @@ const CourseList = () => {
     }
   };
 
-  // 4. AFTER all hooks, you can have conditional logic for early returns
   if (loading && courseData.length === 0) return <Text>Loading...</Text>;
   if (loading || gradesLoading) return <Text>Loading...</Text>;
   if (error) return <Text>Error: {error.message}</Text>;
   if (gradesError) return <Text>Error loading grades: {gradesError.message}</Text>;
   if (isRefreshing) return <Text>Refreshing data...</Text>;
 
-  const filteredCourses = courseData.filter(course =>
-      course.code?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      course.name?.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredCourses: Course[] = courseData.filter(
+      (course): course is Course =>
+          typeof course.code === "string" &&
+          typeof course.name === "string" &&
+          (course.code.toLowerCase().includes(searchQuery.toLowerCase()) ||
+              course.name.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
-  const handleEditPress = (course) => {
+  const handleEditPress = (course: Course) => {
     setEditingCourse(course);
     setFormData({
       name: course.name,
@@ -116,7 +133,7 @@ const CourseList = () => {
     setIsEditModalVisible(true);
   };
 
-  const handleDeletePress = (course) => {
+  const handleDeletePress = (course: CourseProps & { id: string }) => {
     // Show confirmation dialog
     Alert.alert(
         "Delete Course",
@@ -158,7 +175,7 @@ const CourseList = () => {
     }
   };
 
-  const handleInputChange = (field, value) => {
+  const handleInputChange = (field: keyof typeof formData, value: string) => {
     setFormData(prev => ({
       ...prev,
       [field]: value
@@ -166,18 +183,18 @@ const CourseList = () => {
   };
 
   return (
-
       <View style={styles.container}>
         <TextInput
             style={styles.searchBar}
             placeholder="Search by course code or name..."
             value={searchQuery}
             onChangeText={setSearchQuery}
+            placeholderTextColor="#666"
         />
 
         <FlatList
             data={filteredCourses}
-            keyExtractor={(item) => item.id}
+            keyExtractor={(item: CourseProps & { id: string }) => item.id}
             contentContainerStyle={styles.listContainer}
             onRefresh={refreshData}
             refreshing={isRefreshing}
@@ -186,6 +203,7 @@ const CourseList = () => {
                   <Text style={styles.courseName}>{item.code}</Text>
                   <Text style={styles.courseName}>{item.name}</Text>
                   <Text style={styles.description}>{item.description}</Text>
+
 
 
 
@@ -232,7 +250,6 @@ const CourseList = () => {
                       </View>
                   )}
 
-              
               
                   <View style={styles.buttonRow}>
                     <TouchableOpacity
@@ -302,13 +319,11 @@ const CourseList = () => {
                 </TouchableOpacity>
               </View>
             </View>
-
           </View>
         </Modal>
       </View>
   );
 };
-
 
 export default CourseList;
 
