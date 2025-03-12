@@ -13,3 +13,36 @@ export const addStudent = async (student: Omit<StudentProps, "id">) => {
         console.error("Error adding student:", error);
     }
 };
+
+// Function to update an existing student in Firestore
+export const updateStudent = async (id: string, updatedStudent: Partial<StudentProps>) => {
+    try {
+        const studentRef = doc(db, "students", id);
+        await updateDoc(studentRef, updatedStudent);
+        console.log("Student updated successfully");
+    } catch (error) {
+        console.error("Error updating student:", error);
+    }
+};
+
+export const getStudents = async (): Promise<{ id: string; name: string }[]> => {
+    const querySnapshot = await getDocs(collection(db, "students"));
+    return querySnapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+            id: doc.id,
+            name: `${data.firstName || ''} ${data.lastName || ''}`.trim(), // Combine firstName and lastName
+        };
+    });
+};
+export const deleteStudent = async (studentsId: string) => {
+    try {
+        const studentRef = doc(db, "students", studentsId);
+        await deleteDoc(studentRef);
+        console.log("Student deleted successfully:", studentsId);
+        return true;
+    } catch (error) {
+        console.error("Error deleting student:", error);
+        return false;
+    }
+};
