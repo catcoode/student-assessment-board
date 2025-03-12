@@ -8,6 +8,8 @@ import { CourseProps } from "@/components/Course"; // Import the CourseProps typ
 import firebase from "firebase/compat";
 import DocumentData = firebase.firestore.DocumentData;
 
+import { BarChart } from "react-native-chart-kit";
+// interfaces to fix type errors
 interface Course extends CourseProps {
   id: string;
 }
@@ -19,33 +21,31 @@ interface Grade {
 }
 
 interface GradeDistribution {
-  [grade: number]: number; // Grade values (1-5) mapped to counts
+  [grade: number]: number;
 }
+
 type GradeDistributions = Record<string, GradeDistribution>; // Course ID mapped to grade distributions
 
+const screenWidth = Dimensions.get("window").width; // get window width for graph width
 
-import { BarChart } from "react-native-chart-kit";
-
-const screenWidth = Dimensions.get("window").width;
-
-
-// Attributes
+// main function
 const CourseList = () => {
+  // hooks
   const [searchQuery, setSearchQuery] = useState("");
   const { data: courses, loading, error } = useFetchCollection<Course>("courses");
   const { data: grades, loading: gradesLoading, error: gradesError } = useFetchCollection<Grade>("grades");
   const [gradeDistributions, setGradeDistributions] = useState<GradeDistributions>({});
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
   const [editingCourse, setEditingCourse] = useState<{id: string} & CourseProps | null>(null);
+  const [courseData, setCourseData] = useState<DocumentData[]>([]);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     code: "",
     description: ""
   });
-  const [courseData, setCourseData] = useState<DocumentData[]>([]);
-  const [isRefreshing, setIsRefreshing] = useState(false);
 
-  // 2. Move ALL useEffect hooks here, before any conditionals
+  // UseEffect hooks
   useEffect(() => {
     if (!courses || !grades || courses.length === 0 || grades.length === 0) return;
 
@@ -83,14 +83,13 @@ const CourseList = () => {
     setGradeDistributions(distributions);
   }, [courses, grades]);
 
-  // This was after a conditional return before
   useEffect(() => {
     if (courses) {
       setCourseData(courses);
     }
   }, [courses]);
 
-  // Function to manually refresh data
+  // Function to manually refresh data after changes in database
   const refreshData = async () => {
     setIsRefreshing(true);
     try {
@@ -109,6 +108,7 @@ const CourseList = () => {
     }
   };
 
+  // conditionals
   if (loading && courseData.length === 0) return <Text>Loading...</Text>;
   if (loading || gradesLoading) return <Text>Loading...</Text>;
   if (error) return <Text>Error: {error.message}</Text>;
@@ -169,7 +169,6 @@ const CourseList = () => {
         setIsEditModalVisible(false);
         if (refreshData) refreshData();
       } else {
-        // Handle error (you could add more sophisticated error handling)
         alert("Failed to update course");
       }
     }
@@ -216,7 +215,6 @@ const CourseList = () => {
                               datasets: [
                                 {
                                   data: (() => {
-                                    // Calculate total grades for this course
                                     const gradeCounts = Object.values(gradeDistributions[item.id]);
                                     const total = gradeCounts.reduce((sum, count) => sum + count, 0);
 
@@ -226,7 +224,7 @@ const CourseList = () => {
                                 },
                               ],
                             }}
-                            width={screenWidth - 20}
+                            width={screenWidth - 40}
                             height={200}
                             yAxisLabel=""
                             yAxisSuffix="%"
@@ -348,7 +346,7 @@ const styles = StyleSheet.create({
     width: "100%",
   },
   courseCard: {
-    width: 350,
+    width: "100%",
     backgroundColor: "#f0f0f0",
     padding: 15,
     marginVertical: 8,

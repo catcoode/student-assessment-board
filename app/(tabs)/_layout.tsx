@@ -37,7 +37,7 @@ export default function TabLayout() {
         name="courses"
         options={{
           title: 'Courses',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="toilet.fill" color={color} />,
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="paperplane.fill" color={color} />,
         }}
       />
       
@@ -53,14 +53,14 @@ export default function TabLayout() {
         name="studentInfo"
         options={{
           title: 'student info',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="toilet.fill" color={color} />,
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="person.fill" color={color} />,
         }}
       />
       <Tabs.Screen
         name="courseInfo"
         options={{
           title: 'course info',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="toilet.fill" color={color} />,
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="chart.bar" color={color} />,
         }}
       />
 
