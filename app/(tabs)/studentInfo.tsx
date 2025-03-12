@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { Text, View, FlatList, TextInput, StyleSheet, Button, Modal, TouchableOpacity } from "react-native";
-import useFetchCollection from "@/hooks/useFetchCollection"; // Hook to fetch students
-import { updateStudent } from "@/firebase/studentService"; // Import the updateStudent function
-import { StudentProps } from "@/components/Student"; // Import the StudentProps type
+import useFetchCollection from "@/hooks/useFetchCollection";
+import { updateStudent } from "@/firebase/studentService";
+import { StudentProps } from "@/components/Student";
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "@/firebase/firebaseConfig";
 import { Alert } from "react-native";
@@ -13,7 +13,7 @@ interface Student {
   id: string;
   firstName: string;
   lastName: string;
-  email: string; // Add other properties if needed
+  email: string;
 }
 
 const StudentsList = () => {
@@ -30,15 +30,15 @@ const StudentsList = () => {
   const [studentData, setStudentData] = useState<(StudentProps & { id: string })[]>([]);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-  // Use the initial data from useFetchCollection
+
   useEffect(() => {
     if (students) {
       setStudentData(students);
     }
   }, [students]);
 
-  // Function to manually refresh data
-  // Function to manually refresh data
+
+
   const refreshData = async () => {
     setIsRefreshing(true);
     try {
@@ -75,14 +75,14 @@ const StudentsList = () => {
         setIsEditModalVisible(false);
         refreshData();
       } catch (error: any) {
-        // Handle error with proper typing
+
         alert("Failed to update student: " + error.message);
       }
     }
   };
 
   const handleDeletePress = (student: StudentProps & { id: string }) => {
-    // Show confirmation dialog
+
     Alert.alert(
         "Delete student",
         `Are you sure you want to delete the student "${student.firstName} ${student.lastName}"?`,
@@ -97,10 +97,10 @@ const StudentsList = () => {
             onPress: async () => {
               const deleted = await deleteStudent(student.id);
               if (deleted) {
-                // Refresh the data after successful deletion
+
                 refreshData();
               } else {
-                // Handle error
+
                 Alert.alert("Error", "Failed to delete course");
               }
             }
