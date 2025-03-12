@@ -23,6 +23,7 @@ const styles = StyleSheet.create({
         padding: 10,
         marginVertical: 5,
         borderRadius: 5,
+        width: 80%
     },
     studentName: {
         fontSize: 18,
