@@ -1,4 +1,4 @@
-import { Image, StyleSheet, TextInput, Button} from 'react-native';
+import { Image, StyleSheet, TextInput, Button, View , Text} from 'react-native';
 import { useEffect, useState } from "react";
 import { Picker } from '@react-native-picker/picker';
 import ParallaxScrollView from '@/components/ParallaxScrollView';
