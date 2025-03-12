@@ -1,4 +1,4 @@
-import { collection, addDoc, getDocs, doc, updateDoc, deleteDoc } from "firebase/firestore";
+import { collection, addDoc, getDocs, doc, updateDoc, deleteDoc, query, where } from "firebase/firestore";
 import { db } from "./firebaseConfig";
 import { StudentProps } from "../components/Student";
 
@@ -37,8 +37,22 @@ export const getStudents = async (): Promise<{ id: string; name: string }[]> => 
 };
 export const deleteStudent = async (studentsId: string) => {
     try {
+        const gradesRef = collection(db, "grades");
+
+        const q = query(gradesRef, where("studentId", "==", studentsId));
+        const querySnapshot = await getDocs(q);
+
+        const deletePromises = querySnapshot.docs.map((docSnapshot) =>
+            deleteDoc(doc(db, "grades", docSnapshot.id))
+        );
+
+        await Promise.all(deletePromises);
+
+        console.log(`Deleted ${querySnapshot.size} associated grades.`);
+
         const studentRef = doc(db, "students", studentsId);
         await deleteDoc(studentRef);
+
         console.log("Student deleted successfully:", studentsId);
         return true;
     } catch (error) {

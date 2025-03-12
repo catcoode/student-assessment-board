@@ -1,5 +1,5 @@
-import { Image, StyleSheet, TextInput, Button, View , Text} from 'react-native';
-import { useEffect, useState } from "react";
+import { Image, StyleSheet, TextInput, Button,View , Text} from 'react-native';
+import { useEffect, useState, useCallback } from "react";
 import { Picker } from '@react-native-picker/picker';
 import ParallaxScrollView from '@/components/ParallaxScrollView';
 import { ThemedText } from '@/components/ThemedText';
@@ -7,6 +7,8 @@ import { ThemedView } from '@/components/ThemedView';
 import { addGrade } from '@/firebase/gradeService';
 import { getStudents } from '@/firebase/studentService';
 import { getCourses } from '@/firebase/courseService';
+import { useFocusEffect } from '@react-navigation/native';
+
 
 export default function GradeScreen() {
     // State for grade input
@@ -18,19 +20,24 @@ export default function GradeScreen() {
     const [students, setStudents] = useState<{ id: string; name: string }[]>([]);
     const [courses, setCourses] = useState<{ id: string; title: string }[]>([]);
 
-// Fetch students and courses from Firestore
-    useEffect(() => {
-        const fetchData = async () => {
-            const studentsData = await getStudents();
-            const coursesData = await getCourses();
+    // Fetch students and courses when the tab is focused
+    useFocusEffect(
+        useCallback(() => {
+            const fetchData = async () => {
+                try {
+                    const studentsData = await getStudents();
+                    const coursesData = await getCourses();
 
-            setStudents(studentsData);
-            setCourses(coursesData);
-        };
+                    setStudents(studentsData);
+                    setCourses(coursesData);
+                } catch (error) {
+                    console.error("Error fetching data:", error);
+                }
+            };
 
-        fetchData();
-    }, []);
-
+            fetchData();
+        }, [])
+    );
 
     // Function to handle adding a grade
     const handleAddGrade = async () => {
@@ -110,49 +117,49 @@ export default function GradeScreen() {
         </ParallaxScrollView>
     );
 }
-    const styles = StyleSheet.create({
-        titleContainer: {
-            flexDirection: 'row',
-            alignItems: 'center',
-            gap: 8,
-            paddingHorizontal: 16,
-            paddingTop: 16,
-        },
-        stepContainer: {
-            gap: 8,
-            marginBottom: 16,
-            padding: 16,
-        },
-        reactLogo: {
-            height: 178,
-            width: 290,
-            bottom: 0,
-            left: 0,
-            position: 'absolute',
-        },
-        input: {
-            height: 100,
-            borderColor: '#ddd',
-            borderWidth: 1,
-            borderRadius: 8,
-            padding: 12,
-            marginBottom: 16,
-            color: 'black',
-            fontSize: 20,
-            backgroundColor: 'white',
-        },
-        label: {
-            fontSize: 16,
-            fontWeight: '500',
-            marginBottom: 8,
-            marginTop: 8,
-        },
-        picker: {
-            height: 50,
-            backgroundColor: 'white',
-            borderWidth: 1,
-            borderColor: '#ddd',
-            borderRadius: 8,
-            marginBottom: 16,
-        }
-    });
+const styles = StyleSheet.create({
+    titleContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+        paddingHorizontal: 16,
+        paddingTop: 16,
+    },
+    stepContainer: {
+        gap: 8,
+        marginBottom: 16,
+        padding: 16,
+    },
+    reactLogo: {
+        height: 178,
+        width: 290,
+        bottom: 0,
+        left: 0,
+        position: 'absolute',
+    },
+    input: {
+        height: 100,
+        borderColor: '#ddd',
+        borderWidth: 1,
+        borderRadius: 8,
+        padding: 12,
+        marginBottom: 16,
+        color: 'black',
+        fontSize: 20,
+        backgroundColor: 'white',
+    },
+    label: {
+        fontSize: 16,
+        fontWeight: '500',
+        marginBottom: 8,
+        marginTop: 8,
+    },
+    picker: {
+        height: 50,
+        backgroundColor: 'white',
+        borderWidth: 1,
+        borderColor: '#ddd',
+        borderRadius: 8,
+        marginBottom: 16,
+    }
+});
