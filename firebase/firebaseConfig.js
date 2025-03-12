@@ -23,6 +23,7 @@ let analytics;
 if (typeof window !== "undefined") {
     analytics = getAnalytics(app);
 }
+
 const db = getFirestore(app); // This is the Firestore instance
 
 export { db };
