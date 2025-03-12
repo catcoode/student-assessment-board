@@ -4,17 +4,16 @@ import { HelloWave } from '@/components/HelloWave';
 import ParallaxScrollView from '@/components/ParallaxScrollView';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
-import { addCourse } from '@/firebase/courseService'; // Import the addStudent function
+import { addCourse } from '@/firebase/courseService';
 
 export default function CourseScreen() {
-    // State to store student data
+
     const [name, setName] = useState('');
     const [code, setCode] = useState('');
     const [description, setDescription] = useState('');
 
 
-    // Function to handle form submission
-    // Function to handle form submission for adding a course
+
     const handleAddCourse = async () => {
         const newCourse = {
             name,
@@ -22,10 +21,9 @@ export default function CourseScreen() {
             description,
         };
 
-        // Call addCourse to add the new course to Firestore
+
         await addCourse(newCourse);
 
-        // Reset the input fields after submission
         setName('');
         setCode('');
         setDescription('');
