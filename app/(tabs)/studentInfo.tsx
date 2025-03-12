@@ -1,40 +1,168 @@
-import React, { useState } from "react";
-import { Text, View, FlatList, TextInput, StyleSheet } from "react-native";
+import React, { useState, useEffect } from "react";
+import {Text, View, FlatList, TextInput, StyleSheet, Button, Modal, TouchableOpacity} from "react-native";
 import useFetchCollection from "@/hooks/useFetchCollection"; // Hook to fetch students
+import { updateStudent } from "@/firebase/studentService"; // Import the updateStudent function
+import { StudentProps } from "@/components/Student"; // Import the StudentProps type
+import { collection, getDocs } from "firebase/firestore";
+import { db } from "@/firebase/firebaseConfig";
 
 const StudentsList = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const { data: students, loading, error } = useFetchCollection("students");
+  const [isEditModalVisible, setIsEditModalVisible] = useState(false);
+  const [editingStudent, setEditingStudent] = useState<{id: string} & StudentProps | null>(null);
+  const [formData, setFormData] = useState({
+    firstName: "",
+    lastName: "",
+    email: ""
+  });
+
+  const [studentData, setStudentData] = useState([]);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  // Use the initial data from useFetchCollection
+  useEffect(() => {
+    if (students) {
+      setStudentData(students);
+    }
+  }, [students]);
+
+  // Function to manually refresh data
+  const refreshData = async () => {
+    setIsRefreshing(true);
+    try {
+      const studentsCollection = collection(db, "students");
+      const querySnapshot = await getDocs(studentsCollection);
+      const fetchedStudents = [];
+      querySnapshot.forEach((doc) => {
+        fetchedStudents.push({
+          id: doc.id,
+          ...doc.data()
+        });
+      });
+      setStudentData(fetchedStudents);
+    } catch (error) {
+      console.error("Error refreshing students:", error);
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
+
+  const handleEditPress = (student) => {
+    setEditingStudent(student);
+    setFormData({
+      firstName: student.firstName,
+      lastName: student.lastName,
+      email: student.email
+    });
+    setIsEditModalVisible(true);
+  };
+
+  const handleSaveEdit = async () => {
+    if (editingStudent) {
+      try {
+        await updateStudent(editingStudent.id, formData);
+        // Close the modal and refresh the data
+        setIsEditModalVisible(false);
+        refreshData();
+      } catch (error) {
+        // Handle error (you could add more sophisticated error handling)
+        alert("Failed to update student: " + error.message);
+      }
+    }
+  };
+
+  const handleInputChange = (field, value) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
 
   if (loading) return <Text>Loading...</Text>;
   if (error) return <Text>Error: {error.message}</Text>;
 
-  const filteredStudents = students.filter(student =>
-    student.firstName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    student.lastName.toLowerCase().includes(searchQuery.toLowerCase())
+  // Use studentData instead of students for filtering
+  const filteredStudents = studentData.filter(student =>
+      student.firstName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      student.lastName.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   return (
-    <View style={styles.container}>
-      <TextInput
-        style={styles.searchBar}
-        placeholder="Search by name..."
-        value={searchQuery}
-        onChangeText={setSearchQuery}
-      />
+      <View style={styles.container}>
+        <TextInput
+            style={styles.searchBar}
+            placeholder="Search by name..."
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+        />
 
-      <FlatList
-        data={filteredStudents}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.listContainer}
-        renderItem={({ item }) => (
-          <View style={styles.studentCard}>
-            <Text style={styles.studentName}>{item.firstName} {item.lastName}</Text>
-            <Text style={styles.email}>{item.email}</Text>
+        <FlatList
+            data={filteredStudents}
+            keyExtractor={(item) => item.id}
+            contentContainerStyle={styles.listContainer}
+            renderItem={({ item }) => (
+                <View style={styles.studentCard}>
+                  <Text style={styles.studentName}>{item.firstName} {item.lastName}</Text>
+                  <Text style={styles.email}>{item.email}</Text>
+                  <Button title="Edit student" onPress={() => handleEditPress(item)} />
+                </View>
+            )}
+            refreshing={isRefreshing}
+            onRefresh={refreshData}
+        />
+
+        {/* Edit Modal */}
+        <Modal
+            visible={isEditModalVisible}
+            animationType="slide"
+            transparent={true}
+            onRequestClose={() => setIsEditModalVisible(false)}
+        >
+          <View style={styles.modalContainer}>
+            <View style={styles.modalContent}>
+              <Text style={styles.modalTitle}>Edit Student</Text>
+
+              <Text style={styles.inputLabel}>Student first name:</Text>
+              <TextInput
+                  style={styles.input}
+                  value={formData.firstName}
+                  onChangeText={(text) => handleInputChange("firstName", text)}
+              />
+
+              <Text style={styles.inputLabel}>Student last name:</Text>
+              <TextInput
+                  style={styles.input}
+                  value={formData.lastName}
+                  onChangeText={(text) => handleInputChange("lastName", text)}
+              />
+
+              <Text style={styles.inputLabel}>Email:</Text>
+              <TextInput
+                  style={styles.input}
+                  value={formData.email}
+                  onChangeText={(text) => handleInputChange("email", text)}
+              />
+
+              <View style={styles.buttonContainer}>
+                <TouchableOpacity
+                    style={[styles.modalButton, styles.cancelButton]}
+                    onPress={() => setIsEditModalVisible(false)}
+                >
+                  <Text style={styles.buttonText}>Cancel</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                    style={[styles.modalButton, styles.saveButton]}
+                    onPress={handleSaveEdit}
+                >
+                  <Text style={styles.buttonText}>Save</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
           </View>
-        )}
-      />
-    </View>
+        </Modal>
+      </View>
   );
 };
 
@@ -60,20 +188,94 @@ const styles = StyleSheet.create({
     alignItems: "center",
     width: "100%",
   },
-  studentCard: {
-    width: 350, // ✅ Adjusted width to 80% of screen
+  courseCard: {
+    width: 350,
     backgroundColor: "#f0f0f0",
     padding: 15,
     marginVertical: 8,
     borderRadius: 8,
     alignItems: "center",
   },
-  studentName: {
+  courseName: {
     fontSize: 18,
     fontWeight: "bold",
   },
-  email: {
+  description: {
     fontSize: 14,
     color: "blue",
+    marginBottom: 10,
+  },
+  editButton: {
+    backgroundColor: "#4a90e2",
+    paddingHorizontal: 15,
+    paddingVertical: 8,
+    borderRadius: 5,
+    marginTop: 5,
+  },
+  editButtonText: {
+    color: "white",
+    fontWeight: "bold",
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0,0,0,0.5)",
+  },
+  modalContent: {
+    width: "80%",
+    backgroundColor: "white",
+    borderRadius: 10,
+    padding: 20,
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: "bold",
+    marginBottom: 20,
+  },
+  inputLabel: {
+    alignSelf: "flex-start",
+    marginBottom: 5,
+    fontWeight: "bold",
+  },
+  input: {
+    width: "100%",
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 5,
+    padding: 10,
+    marginBottom: 15,
+  },
+  buttonContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    width: "100%",
+    marginTop: 10,
+  },
+  modalButton: {
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 5,
+    minWidth: 100,
+    alignItems: "center",
+  },
+  cancelButton: {
+    backgroundColor: "#ff6b6b",
+  },
+  saveButton: {
+    backgroundColor: "#4ecdc4",
+  },
+  buttonText: {
+    color: "white",
+    fontWeight: "bold",
   },
 });

@@ -13,3 +13,14 @@ export const addStudent = async (student: Omit<StudentProps, "id">) => {
         console.error("Error adding student:", error);
     }
 };
+
+// Function to update an existing student in Firestore
+export const updateStudent = async (id: string, updatedStudent: Partial<StudentProps>) => {
+    try {
+        const studentRef = doc(db, "students", id);
+        await updateDoc(studentRef, updatedStudent);
+        console.log("Student updated successfully");
+    } catch (error) {
+        console.error("Error updating student:", error);
+    }
+};
