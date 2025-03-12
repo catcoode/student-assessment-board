@@ -40,14 +40,29 @@ export default function TabLayout() {
           tabBarIcon: ({ color }) => <IconSymbol size={28} name="toilet.fill" color={color} />,
         }}
       />
-
-        <Tabs.Screen
+      
+       <Tabs.Screen
             name="grade"
             options={{
                 title: 'Grades',
                 tabBarIcon: ({ color }) => <IconSymbol size={28} name="graduationcap.fill" color={color} />,
             }}
         />
+
+      <Tabs.Screen
+        name="studentInfo"
+        options={{
+          title: 'student info',
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="toilet.fill" color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="courseInfo"
+        options={{
+          title: 'course info',
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="toilet.fill" color={color} />,
+        }}
+      />
 
     </Tabs>
   );

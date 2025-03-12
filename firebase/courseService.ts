@@ -21,4 +21,17 @@ export const getCourses = async (): Promise<{ id: string; title: string }[]> => 
         id: doc.id,
         title: doc.data().name || "", // Ensure 'name' exists
     }));
+
+// Update Course
+export const updateCourse = async (courseId: string, updatedCourse: Partial<CourseProps>) => {
+    try {
+        const courseRef = doc(db, "courses", courseId);
+        await updateDoc(courseRef, updatedCourse);
+        console.log("Course updated successfully:", courseId);
+        return true;
+    } catch (error) {
+        console.error("Error updating course:", error);
+        return false;
+    }
+
 };
