@@ -13,58 +13,45 @@ const screenWidth = Dimensions.get("window").width;
 
 // Attributes
 const CourseList = () => {
+  // 1. Declare ALL hooks at the top, before any conditional logic
   const [searchQuery, setSearchQuery] = useState("");
   const { data: courses, loading, error } = useFetchCollection("courses");
-
-    
   const { data: grades, loading: gradesLoading, error: gradesError } = useFetchCollection("grades");
   const [gradeDistributions, setGradeDistributions] = useState({});
-    
-    
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
-  const [editingCourse, setEditingCourse] = useState<{id: string} & CourseProps | null>(null);
+  const [editingCourse, setEditingCourse] = useState(null);
   const [formData, setFormData] = useState({
     name: "",
     code: "",
     description: ""
   });
-
   const [courseData, setCourseData] = useState([]);
   const [isRefreshing, setIsRefreshing] = useState(false);
-    
-    
-    
-    
-    
+
+  // 2. Move ALL useEffect hooks here, before any conditionals
   useEffect(() => {
     if (!courses || !grades || courses.length === 0 || grades.length === 0) return;
-    
+
     console.log("Processing grades:", grades.length, "items");
     const distributions = {};
-    
-    // Inital grades
+
     courses.forEach(course => {
       distributions[course.id] = {1: 0, 2: 0, 3: 0, 4: 0, 5: 0};
     });
-    
-    // Telle karakterer
+
     grades.forEach(grade => {
-      // Skip grades with missing courseId
       if (!grade.courseId) {
         console.log('Found grade without courseId:', grade);
-        return; 
+        return;
       }
-      
-      // Finn fag-id
+
       const courseId = grade.courseId;
-      
-      // Bruke grade.grade, ikke grade.score
+
       if (distributions[courseId] && grade.grade) {
-        // Sjekk at karakter er innenfor tillatte karakterer
         const gradeValue = parseInt(grade.grade);
         if (gradeValue >= 1 && gradeValue <= 5) {
-          distributions[courseId][gradeValue] = 
-            (distributions[courseId][gradeValue] || 0) + 1;
+          distributions[courseId][gradeValue] =
+              (distributions[courseId][gradeValue] || 0) + 1;
         } else {
           console.log(`Invalid grade value: ${grade.grade} for course ${courseId}`);
         }
@@ -74,30 +61,19 @@ const CourseList = () => {
         console.log(`Missing grade value for entry:`, grade);
       }
     });
-    
+
     console.log("Grade distributions:", distributions);
     setGradeDistributions(distributions);
   }, [courses, grades]);
 
-
-
-
-
-
-  if (loading || gradesLoading) return <Text>Loading...</Text>;
-  if (error) return <Text>Error: {error.message}</Text>;
-  if (gradesError) return <Text>Error loading grades: {gradesError.message}</Text>;
-    
-    
-
-  // Use the initial data from useFetchCollection
+  // This was after a conditional return before
   useEffect(() => {
     if (courses) {
       setCourseData(courses);
     }
   }, [courses]);
 
-  // Function to manually refresh data
+  // 3. Helper functions
   const refreshData = async () => {
     setIsRefreshing(true);
     try {
@@ -118,10 +94,12 @@ const CourseList = () => {
     }
   };
 
+  // 4. AFTER all hooks, you can have conditional logic for early returns
   if (loading && courseData.length === 0) return <Text>Loading...</Text>;
+  if (loading || gradesLoading) return <Text>Loading...</Text>;
   if (error) return <Text>Error: {error.message}</Text>;
+  if (gradesError) return <Text>Error loading grades: {gradesError.message}</Text>;
   if (isRefreshing) return <Text>Refreshing data...</Text>;
-
 
   const filteredCourses = courseData.filter(course =>
       course.code?.toLowerCase().includes(searchQuery.toLowerCase()) ||
