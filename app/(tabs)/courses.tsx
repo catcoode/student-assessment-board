@@ -1,11 +1,10 @@
-import { Image, StyleSheet, Platform, FlatList, TextInput, Button } from 'react-native';
+import { Image, StyleSheet, TextInput, Button } from 'react-native';
 import { useState } from "react";
 import { HelloWave } from '@/components/HelloWave';
 import ParallaxScrollView from '@/components/ParallaxScrollView';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { addCourse } from '@/firebase/courseService'; // Import the addStudent function
-import { collection, query, where, getDocs } from "@/firebase/firestore";
 
 export default function CourseScreen() {
     // State to store student data
@@ -46,7 +45,7 @@ export default function CourseScreen() {
                 />
             }>
             <ThemedView style={styles.titleContainer}>
-                <ThemedText type="title">Welcome!</ThemedText>
+                <ThemedText type="title">Add Courses</ThemedText>
                 <HelloWave />
             </ThemedView>
 
@@ -58,18 +57,21 @@ export default function CourseScreen() {
                     value={name}
                     onChangeText={setName}
                     style={styles.input}
+                    placeholderTextColor="#666"
                 />
                 <TextInput
                     placeholder="Course Code"
                     value={code}
                     onChangeText={setCode}
                     style={styles.input}
+                    placeholderTextColor="#666"
                 />
                 <TextInput
                     placeholder="Course Description"
                     value={description}
                     onChangeText={setDescription}
                     style={styles.input}
+                    placeholderTextColor="#666"
                 />
                 <Button title="Add Course" onPress={handleAddCourse} />
             </ThemedView>

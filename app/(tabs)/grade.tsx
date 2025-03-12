@@ -1,5 +1,5 @@
-import { Image, StyleSheet, TextInput, Button,View , Text} from 'react-native';
-import { useEffect, useState, useCallback } from "react";
+import { Image, StyleSheet, TextInput, Button, View , Text} from 'react-native';
+import { useEffect, useState } from "react";
 import { Picker } from '@react-native-picker/picker';
 import ParallaxScrollView from '@/components/ParallaxScrollView';
 import { ThemedText } from '@/components/ThemedText';
@@ -7,8 +7,6 @@ import { ThemedView } from '@/components/ThemedView';
 import { addGrade } from '@/firebase/gradeService';
 import { getStudents } from '@/firebase/studentService';
 import { getCourses } from '@/firebase/courseService';
-import { useFocusEffect } from '@react-navigation/native';
-
 
 export default function GradeScreen() {
     // State for grade input
@@ -20,24 +18,19 @@ export default function GradeScreen() {
     const [students, setStudents] = useState<{ id: string; name: string }[]>([]);
     const [courses, setCourses] = useState<{ id: string; title: string }[]>([]);
 
-    // Fetch students and courses when the tab is focused
-    useFocusEffect(
-        useCallback(() => {
-            const fetchData = async () => {
-                try {
-                    const studentsData = await getStudents();
-                    const coursesData = await getCourses();
+// Fetch students and courses from Firestore
+    useEffect(() => {
+        const fetchData = async () => {
+            const studentsData = await getStudents();
+            const coursesData = await getCourses();
 
-                    setStudents(studentsData);
-                    setCourses(coursesData);
-                } catch (error) {
-                    console.error("Error fetching data:", error);
-                }
-            };
+            setStudents(studentsData);
+            setCourses(coursesData);
+        };
 
-            fetchData();
-        }, [])
-    );
+        fetchData();
+    }, []);
+
 
     // Function to handle adding a grade
     const handleAddGrade = async () => {

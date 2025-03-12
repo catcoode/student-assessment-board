@@ -173,6 +173,7 @@ const CourseList = () => {
             placeholder="Search by course code or name..."
             value={searchQuery}
             onChangeText={setSearchQuery}
+            placeholderTextColor="#666"
         />
 
         <FlatList
