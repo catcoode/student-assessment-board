@@ -186,44 +186,52 @@ const CourseList = () => {
                   <Text style={styles.courseName}>{item.code}</Text>
                   <Text style={styles.courseName}>{item.name}</Text>
                   <Text style={styles.description}>{item.description}</Text>
-              
-              
-                  {gradeDistributions[item.id] && (
-                  <View style={styles.chartContainer}>
-                    <Text style={styles.distributionTitle}>Grade Distribution:</Text>
-                    <BarChart
-                      data={{
-                        labels: Object.keys(gradeDistributions[item.id]).map(grade => `Grade ${grade}`),
-                        datasets: [
-                          {
-                            data: Object.values(gradeDistributions[item.id]),
-                          },
-                        ],
-                      }}
-                      width={screenWidth - 80}
-                      height={200}
-                      yAxisLabel=""
-                      yAxisSuffix=""
-                      chartConfig={{
-                        backgroundColor: '#ffffff',
-                        backgroundGradientFrom: '#ffffff',
-                        backgroundGradientTo: '#ffffff',
-                        decimalPlaces: 0, 
-                        color: (opacity = 1) => `rgba(0, 107, 182, ${opacity})`, 
-                        labelColor: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`, 
-                        style: {
-                            borderRadius: 16,
-                        },
-                        barPercentage: 0.8,
 
-                      }}
-                      style={{
-                        marginVertical: 8,
-                        borderRadius: 16,
-                      }}
-                    />
-                  </View>
-                )}
+
+
+                  {gradeDistributions[item.id] && (
+                      <View style={styles.chartContainer}>
+                        <Text style={styles.distributionTitle}>Grade Distribution:</Text>
+                        <BarChart
+                            data={{
+                              labels: Object.keys(gradeDistributions[item.id]).map(grade => `${grade}`),
+                              datasets: [
+                                {
+                                  data: (() => {
+                                    // Calculate total grades for this course
+                                    const gradeCounts = Object.values(gradeDistributions[item.id]);
+                                    const total = gradeCounts.reduce((sum, count) => sum + count, 0);
+
+                                    // Convert counts to percentages
+                                    return gradeCounts.map(count => total > 0 ? (count / total) * 100 : 0);
+                                  })(),
+                                },
+                              ],
+                            }}
+                            width={screenWidth - 20}
+                            height={200}
+                            yAxisLabel=""
+                            yAxisSuffix="%"
+                            chartConfig={{
+                              backgroundColor: '#ffffff',
+                              backgroundGradientFrom: '#ffffff',
+                              backgroundGradientTo: '#ffffff',
+                              decimalPlaces: 1, // Show one decimal place for percentages
+                              color: (opacity = 1) => `rgba(0, 100, 180, ${opacity})`,
+                              labelColor: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
+                              style: {
+                                borderRadius: 16,
+                              },
+                              barPercentage: 1,
+                            }}
+                            style={{
+                              marginVertical: 8,
+                              borderRadius: 16,
+                            }}
+                        />
+                      </View>
+                  )}
+
               
               
                   <View style={styles.buttonRow}>
