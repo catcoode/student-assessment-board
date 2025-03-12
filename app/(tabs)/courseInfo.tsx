@@ -12,6 +12,18 @@ interface Course extends CourseProps {
   id: string;
 }
 
+interface Grade {
+  id: string;
+  courseId: string;
+  grade: string;
+}
+
+interface GradeDistribution {
+  [grade: number]: number; // Grade values (1-5) mapped to counts
+}
+type GradeDistributions = Record<string, GradeDistribution>; // Course ID mapped to grade distributions
+
+
 import { BarChart } from "react-native-chart-kit";
 
 const screenWidth = Dimensions.get("window").width;
@@ -21,8 +33,8 @@ const screenWidth = Dimensions.get("window").width;
 const CourseList = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const { data: courses, loading, error } = useFetchCollection<Course>("courses");
-  const { data: grades, loading: gradesLoading, error: gradesError } = useFetchCollection("grades");
-  const [gradeDistributions, setGradeDistributions] = useState({});
+  const { data: grades, loading: gradesLoading, error: gradesError } = useFetchCollection<Grade>("grades");
+  const [gradeDistributions, setGradeDistributions] = useState<GradeDistributions>({});
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
   const [editingCourse, setEditingCourse] = useState<{id: string} & CourseProps | null>(null);
   const [formData, setFormData] = useState({
@@ -38,7 +50,7 @@ const CourseList = () => {
     if (!courses || !grades || courses.length === 0 || grades.length === 0) return;
 
     console.log("Processing grades:", grades.length, "items");
-    const distributions = {};
+    const distributions: Record<string, Record<number, number>> = {};
 
     courses.forEach(course => {
       distributions[course.id] = {1: 0, 2: 0, 3: 0, 4: 0, 5: 0};
