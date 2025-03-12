@@ -21,7 +21,7 @@ export const getCourses = async (): Promise<{ id: string; title: string }[]> => 
         id: doc.id,
         title: doc.data().name || "", // Ensure 'name' exists
     }));
-
+}
 // Update Course
 export const updateCourse = async (courseId: string, updatedCourse: Partial<CourseProps>) => {
     try {
@@ -33,5 +33,4 @@ export const updateCourse = async (courseId: string, updatedCourse: Partial<Cour
         console.error("Error updating course:", error);
         return false;
     }
-
 };
