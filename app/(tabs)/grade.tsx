@@ -11,16 +11,15 @@ import { useFocusEffect } from '@react-navigation/native';
 
 
 export default function GradeScreen() {
-    // State for grade input
     const [grade, setGrade] = useState('');
     const [selectedStudentId, setSelectedStudentId] = useState('');
     const [selectedCourseId, setSelectedCourseId] = useState('');
 
-    // State to store students & courses
+
     const [students, setStudents] = useState<{ id: string; name: string }[]>([]);
     const [courses, setCourses] = useState<{ id: string; title: string }[]>([]);
 
-    // Fetch students and courses when the tab is focused
+    // Fetch students and courses when the grade tab is opend
     useFocusEffect(
         useCallback(() => {
             const fetchData = async () => {
@@ -47,7 +46,7 @@ export default function GradeScreen() {
         }
 
         const newGrade = {
-            grade: parseFloat(grade), // Convert grade to number
+            grade: parseFloat(grade),
             studentId: selectedStudentId,
             courseId: selectedCourseId,
         };
@@ -73,9 +72,7 @@ export default function GradeScreen() {
                 <ThemedText type="title">Add Grade</ThemedText>
             </ThemedView>
 
-            {/* Form to add a grade */}
             <ThemedView style={styles.stepContainer}>
-                {/* Grade Input */}
                 <TextInput
                     placeholder="Grade"
                     value={grade}
@@ -85,7 +82,6 @@ export default function GradeScreen() {
                     placeholderTextColor="#666"
                 />
 
-                {/* Student Dropdown */}
                 <Picker
                     selectedValue={selectedStudentId}
                     onValueChange={(itemValue) => setSelectedStudentId(itemValue)}
@@ -98,7 +94,6 @@ export default function GradeScreen() {
                     ))}
                 </Picker>
 
-                {/* Course Dropdown */}
                 <Picker
                     selectedValue={selectedCourseId}
                     onValueChange={(itemValue) => setSelectedCourseId(itemValue)}
@@ -111,7 +106,6 @@ export default function GradeScreen() {
                     ))}
                 </Picker>
 
-                {/* Submit Button */}
                 <Button title="Add Grade" onPress={handleAddGrade}/>
             </ThemedView>
         </ParallaxScrollView>
