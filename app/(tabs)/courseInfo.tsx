@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from "react";
-import { Text, View, FlatList, TextInput, StyleSheet, TouchableOpacity, Modal } from "react-native";
+import { Text, View, FlatList, TextInput, StyleSheet, TouchableOpacity, Modal, Alert } from "react-native";
 import useFetchCollection from "@/hooks/useFetchCollection"; // Hook to fetch students
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "@/firebase/firebaseConfig";
-import { updateCourse } from "@/firebase/courseService"; // Import the updateCourse function
+import { updateCourse, deleteCourse } from "@/firebase/courseService"; // Import the updateCourse and deleteCourse functions
 import { CourseProps } from "@/components/Course"; // Import the CourseProps type
 
 // Attributes
@@ -68,6 +68,34 @@ const CourseList = () => {
     setIsEditModalVisible(true);
   };
 
+  const handleDeletePress = (course) => {
+    // Show confirmation dialog
+    Alert.alert(
+        "Delete Course",
+        `Are you sure you want to delete the course "${course.name}"?`,
+        [
+          {
+            text: "Cancel",
+            style: "cancel"
+          },
+          {
+            text: "Delete",
+            style: "destructive",
+            onPress: async () => {
+              const deleted = await deleteCourse(course.id);
+              if (deleted) {
+                // Refresh the data after successful deletion
+                refreshData();
+              } else {
+                // Handle error
+                Alert.alert("Error", "Failed to delete course");
+              }
+            }
+          }
+        ]
+    );
+  };
+
   const handleSaveEdit = async () => {
     if (editingCourse) {
       const updated = await updateCourse(editingCourse.id, formData);
@@ -109,12 +137,20 @@ const CourseList = () => {
                   <Text style={styles.courseName}>{item.code}</Text>
                   <Text style={styles.courseName}>{item.name}</Text>
                   <Text style={styles.description}>{item.description}</Text>
-                  <TouchableOpacity
-                      style={styles.editButton}
-                      onPress={() => handleEditPress(item)}
-                  >
-                    <Text style={styles.editButtonText}>Edit</Text>
-                  </TouchableOpacity>
+                  <View style={styles.buttonRow}>
+                    <TouchableOpacity
+                        style={styles.editButton}
+                        onPress={() => handleEditPress(item)}
+                    >
+                      <Text style={styles.buttonText}>Edit</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                        style={styles.deleteButton}
+                        onPress={() => handleDeletePress(item)}
+                    >
+                      <Text style={styles.buttonText}>Remove</Text>
+                    </TouchableOpacity>
+                  </View>
                 </View>
             )}
         />
@@ -214,14 +250,29 @@ const styles = StyleSheet.create({
     color: "blue",
     marginBottom: 10,
   },
+  buttonRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    width: "60%",
+    marginTop: 5,
+  },
   editButton: {
     backgroundColor: "#4a90e2",
     paddingHorizontal: 15,
     paddingVertical: 8,
     borderRadius: 5,
-    marginTop: 5,
+    minWidth: 80,
+    alignItems: "center",
   },
-  editButtonText: {
+  deleteButton: {
+    backgroundColor: "#e74c3c",
+    paddingHorizontal: 15,
+    paddingVertical: 8,
+    borderRadius: 5,
+    minWidth: 80,
+    alignItems: "center",
+  },
+  buttonText: {
     color: "white",
     fontWeight: "bold",
   },
@@ -282,9 +333,5 @@ const styles = StyleSheet.create({
   },
   saveButton: {
     backgroundColor: "#4ecdc4",
-  },
-  buttonText: {
-    color: "white",
-    fontWeight: "bold",
   },
 });
