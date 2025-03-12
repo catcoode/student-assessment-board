@@ -1,15 +1,26 @@
 import React, { useState, useEffect } from "react";
-import { Text, View, FlatList, TextInput, StyleSheet, TouchableOpacity, Modal, Alert } from "react-native";
+
+import { Text, View, FlatList, TextInput, StyleSheet, TouchableOpacity, Modal, Alert, Dimensions } from "react-native";
 import useFetchCollection from "@/hooks/useFetchCollection"; // Hook to fetch students
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "@/firebase/firebaseConfig";
 import { updateCourse, deleteCourse } from "@/firebase/courseService"; // Import the updateCourse and deleteCourse functions
 import { CourseProps } from "@/components/Course"; // Import the CourseProps type
+import { BarChart } from "react-native-chart-kit";
+
+const screenWidth = Dimensions.get("window").width;
+
 
 // Attributes
 const CourseList = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const { data: courses, loading, error } = useFetchCollection("courses");
+
+    
+  const { data: grades, loading: gradesLoading, error: gradesError } = useFetchCollection("grades");
+  const [gradeDistributions, setGradeDistributions] = useState({});
+    
+    
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
   const [editingCourse, setEditingCourse] = useState<{id: string} & CourseProps | null>(null);
   const [formData, setFormData] = useState({
@@ -20,6 +31,64 @@ const CourseList = () => {
 
   const [courseData, setCourseData] = useState([]);
   const [isRefreshing, setIsRefreshing] = useState(false);
+    
+    
+    
+    
+    
+  useEffect(() => {
+    if (!courses || !grades || courses.length === 0 || grades.length === 0) return;
+    
+    console.log("Processing grades:", grades.length, "items");
+    const distributions = {};
+    
+    // Inital grades
+    courses.forEach(course => {
+      distributions[course.id] = {1: 0, 2: 0, 3: 0, 4: 0, 5: 0};
+    });
+    
+    // Telle karakterer
+    grades.forEach(grade => {
+      // Skip grades with missing courseId
+      if (!grade.courseId) {
+        console.log('Found grade without courseId:', grade);
+        return; 
+      }
+      
+      // Finn fag-id
+      const courseId = grade.courseId;
+      
+      // Bruke grade.grade, ikke grade.score
+      if (distributions[courseId] && grade.grade) {
+        // Sjekk at karakter er innenfor tillatte karakterer
+        const gradeValue = parseInt(grade.grade);
+        if (gradeValue >= 1 && gradeValue <= 5) {
+          distributions[courseId][gradeValue] = 
+            (distributions[courseId][gradeValue] || 0) + 1;
+        } else {
+          console.log(`Invalid grade value: ${grade.grade} for course ${courseId}`);
+        }
+      } else if (!distributions[courseId]) {
+        console.log(`Course ID not found: ${courseId}`);
+      } else if (!grade.grade) {
+        console.log(`Missing grade value for entry:`, grade);
+      }
+    });
+    
+    console.log("Grade distributions:", distributions);
+    setGradeDistributions(distributions);
+  }, [courses, grades]);
+
+
+
+
+
+
+  if (loading || gradesLoading) return <Text>Loading...</Text>;
+  if (error) return <Text>Error: {error.message}</Text>;
+  if (gradesError) return <Text>Error loading grades: {gradesError.message}</Text>;
+    
+    
 
   // Use the initial data from useFetchCollection
   useEffect(() => {
@@ -52,6 +121,7 @@ const CourseList = () => {
   if (loading && courseData.length === 0) return <Text>Loading...</Text>;
   if (error) return <Text>Error: {error.message}</Text>;
   if (isRefreshing) return <Text>Refreshing data...</Text>;
+
 
   const filteredCourses = courseData.filter(course =>
       course.code?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -118,6 +188,7 @@ const CourseList = () => {
   };
 
   return (
+
       <View style={styles.container}>
         <TextInput
             style={styles.searchBar}
@@ -137,6 +208,46 @@ const CourseList = () => {
                   <Text style={styles.courseName}>{item.code}</Text>
                   <Text style={styles.courseName}>{item.name}</Text>
                   <Text style={styles.description}>{item.description}</Text>
+              
+              
+                  {gradeDistributions[item.id] && (
+                  <View style={styles.chartContainer}>
+                    <Text style={styles.distributionTitle}>Grade Distribution:</Text>
+                    <BarChart
+                      data={{
+                        labels: Object.keys(gradeDistributions[item.id]).map(grade => `Grade ${grade}`),
+                        datasets: [
+                          {
+                            data: Object.values(gradeDistributions[item.id]),
+                          },
+                        ],
+                      }}
+                      width={screenWidth - 80}
+                      height={200}
+                      yAxisLabel=""
+                      yAxisSuffix=""
+                      chartConfig={{
+                        backgroundColor: '#ffffff',
+                        backgroundGradientFrom: '#ffffff',
+                        backgroundGradientTo: '#ffffff',
+                        decimalPlaces: 0, 
+                        color: (opacity = 1) => `rgba(0, 107, 182, ${opacity})`, 
+                        labelColor: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`, 
+                        style: {
+                            borderRadius: 16,
+                        },
+                        barPercentage: 0.8,
+
+                      }}
+                      style={{
+                        marginVertical: 8,
+                        borderRadius: 16,
+                      }}
+                    />
+                  </View>
+                )}
+              
+              
                   <View style={styles.buttonRow}>
                     <TouchableOpacity
                         style={styles.editButton}
@@ -205,11 +316,13 @@ const CourseList = () => {
                 </TouchableOpacity>
               </View>
             </View>
+
           </View>
         </Modal>
       </View>
   );
 };
+
 
 export default CourseList;
 
@@ -333,5 +446,40 @@ const styles = StyleSheet.create({
   },
   saveButton: {
     backgroundColor: "#4ecdc4",
+  },
+  distributionContainer: {
+    width: '100%',
+    marginTop: 10,
+    paddingTop: 10,
+    borderTopWidth: 1,
+    borderTopColor: '#e0e0e0',
+  },
+  distributionTitle: {
+    fontWeight: 'bold',
+    marginBottom: 5,
+  },
+  gradesRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    marginTop: 5,
+  },
+  gradeItem: {
+    alignItems: 'center',
+    minWidth: 30,
+    marginHorizontal: 5,
+  },
+  gradeValue: {
+    fontWeight: 'bold',
+  },
+  gradeCount: {
+    color: '#666',
+  },
+  chartContainer: {
+    width: '100%',
+    marginTop: 10,
+    paddingTop: 10,
+    borderTopWidth: 1,
+    borderTopColor: '#e0e0e0',
+    alignItems: 'center',
   },
 });
