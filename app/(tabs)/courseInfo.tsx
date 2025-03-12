@@ -1,6 +1,10 @@
 import React, { useState, useEffect } from "react";
-import { Text, View, FlatList, TextInput, StyleSheet } from "react-native";
+import { Text, View, FlatList, TextInput, StyleSheet, Dimensions } from "react-native";
 import useFetchCollection from "@/hooks/useFetchCollection"; // Hook to fetch students
+import { BarChart } from "react-native-chart-kit";
+
+const screenWidth = Dimensions.get("window").width;
+
 
 const CourseList = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -14,6 +18,7 @@ const CourseList = () => {
   useEffect(() => {
     if (!courses || !grades || courses.length === 0 || grades.length === 0) return;
     
+    console.log("Processing grades:", grades.length, "items");
     const distributions = {};
     
     // Initialize distributions for each course
@@ -29,28 +34,27 @@ const CourseList = () => {
         return; // Skip this grade
       }
       
-      // Extract the course ID from the reference path - more safely
-      let courseId;
+      // Extract the course ID from the reference path
+      const courseId = grade.courseId;
       
-      if (typeof grade.courseId === 'string') {
-        // Handle string references like "/courses/TUF5EmrC6722vgwlw23F"
-        const parts = grade.courseId.split('/');
-        courseId = parts[parts.length - 1]; // Get the last part
-      } else if (grade.courseId && typeof grade.courseId === 'object') {
-        // Handle object references
-        courseId = grade.courseId.id;
-      } else {
-        // Unknown format - log and skip
-        console.log('Unrecognized courseId format:', grade.courseId);
-        return;
-      }
-      
-      if (distributions[courseId] && grade.score) {
-        distributions[courseId][grade.score] = 
-          (distributions[courseId][grade.score] || 0) + 1;
+      // Use grade.grade instead of grade.score
+      if (distributions[courseId] && grade.grade) {
+        // Ensure the grade value is a number between 1-5
+        const gradeValue = parseInt(grade.grade);
+        if (gradeValue >= 1 && gradeValue <= 5) {
+          distributions[courseId][gradeValue] = 
+            (distributions[courseId][gradeValue] || 0) + 1;
+        } else {
+          console.log(`Invalid grade value: ${grade.grade} for course ${courseId}`);
+        }
+      } else if (!distributions[courseId]) {
+        console.log(`Course ID not found: ${courseId}`);
+      } else if (!grade.grade) {
+        console.log(`Missing grade value for entry:`, grade);
       }
     });
     
+    console.log("Grade distributions:", distributions);
     setGradeDistributions(distributions);
   }, [courses, grades]);
 
@@ -90,27 +94,48 @@ const CourseList = () => {
 
 
             {gradeDistributions[item.id] && (
-              <View style={styles.distributionContainer}>
+              <View style={styles.chartContainer}>
                 <Text style={styles.distributionTitle}>Grade Distribution:</Text>
-                <View style={styles.gradesRow}>
-                  {Object.entries(gradeDistributions[item.id]).map(([grade, count]) => (
-                    <View key={grade} style={styles.gradeItem}>
-                      <Text style={styles.gradeValue}>{grade}</Text>
-                      <Text style={styles.gradeCount}>{count}</Text>
-                    </View>
-                  ))}
-                </View>
+                <BarChart
+                  data={{
+                    labels: Object.keys(gradeDistributions[item.id]).map(grade => `Grade ${grade}`),
+                    datasets: [
+                      {
+                        data: Object.values(gradeDistributions[item.id]),
+                      },
+                    ],
+                  }}
+                  width={screenWidth - 80}
+                  height={200}
+                  yAxisLabel=""
+                  yAxisSuffix=""
+                  chartConfig={{
+                    backgroundColor: '#ffffff', // Sets the chart background to white
+                    backgroundGradientFrom: '#ffffff', // Starts the background gradient with white
+                    backgroundGradientTo: '#ffffff', // Ends the background gradient with white
+                    decimalPlaces: 0, // Shows whole numbers only (no decimal places)
+                    color: (opacity = 1) => `rgba(0, 107, 182, ${opacity})`, // Sets bar color to blue with adjustable transparency
+                    labelColor: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`, // Sets text label color to black
+                    style: {
+                        borderRadius: 16, // Rounds the corners of the chart area
+                    },
+                    barPercentage: 0.8, // Makes the bars thinner (30% of available width)
+        
+                  }}
+                  style={{
+                    marginVertical: 8,
+                    borderRadius: 16,
+                  }}
+                />
               </View>
             )}
-
-
-
           </View>
         )}
       />
     </View>
   );
 };
+
 
 export default CourseList;
 
@@ -176,5 +201,13 @@ const styles = StyleSheet.create({
   },
   gradeCount: {
     color: '#666',
+  },
+  chartContainer: {
+    width: '100%',
+    marginTop: 10,
+    paddingTop: 10,
+    borderTopWidth: 1,
+    borderTopColor: '#e0e0e0',
+    alignItems: 'center',
   },
 });
