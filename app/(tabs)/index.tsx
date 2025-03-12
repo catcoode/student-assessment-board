@@ -21,10 +21,8 @@ export default function HomeScreen() {
             email: studentEmail,
         };
 
-        // Call addStudent to add the new student to Firestore
         await addStudent(newStudent);
 
-        // Reset the input fields after submission
         setFirstName('');
         setLastName('');
         setStudentEmail('');

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Text, View, FlatList, TextInput, StyleSheet, Button, Modal, TouchableOpacity } from "react-native";
+import { Text, View, FlatList, TextInput, StyleSheet, Modal, TouchableOpacity } from "react-native";
 import useFetchCollection from "@/hooks/useFetchCollection";
 import { updateStudent } from "@/firebase/studentService";
 import { StudentProps } from "@/components/Student";
