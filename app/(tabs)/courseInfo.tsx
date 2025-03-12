@@ -4,12 +4,20 @@ import useFetchCollection from "@/hooks/useFetchCollection"; // Hook to fetch st
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "@/firebase/firebaseConfig";
 import { updateCourse } from "@/firebase/courseService"; // Import the updateCourse function
-import { CourseProps } from "@/components/Course"; // Import the CourseProps type
+import { CourseProps } from "@/components/Course";
+import firebase from "firebase/compat";
+import DocumentData = firebase.firestore.DocumentData; // Import the CourseProps type
+
+
+interface Course extends CourseProps {
+  id: string;
+}
+
 
 // Attributes
 const CourseList = () => {
   const [searchQuery, setSearchQuery] = useState("");
-  const { data: courses, loading, error } = useFetchCollection("courses");
+  const { data: courses, loading, error } = useFetchCollection<Course>("courses");
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
   const [editingCourse, setEditingCourse] = useState<{id: string} & CourseProps | null>(null);
   const [formData, setFormData] = useState({
@@ -17,8 +25,7 @@ const CourseList = () => {
     code: "",
     description: ""
   });
-
-  const [courseData, setCourseData] = useState([]);
+  const [courseData, setCourseData] = useState<DocumentData[]>([]);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   // Use the initial data from useFetchCollection
@@ -34,13 +41,11 @@ const CourseList = () => {
     try {
       const coursesCollection = collection(db, "courses");
       const querySnapshot = await getDocs(coursesCollection);
-      const fetchedCourses = [];
-      querySnapshot.forEach((doc) => {
-        fetchedCourses.push({
-          id: doc.id,
-          ...doc.data()
-        });
-      });
+      const fetchedCourses: Course[] = querySnapshot.docs.map(doc => ({
+        id: doc.id,  // Ensure id is included
+        ...(doc.data() as Omit<Course, "id">) // Type assertion
+      }));
+
       setCourseData(fetchedCourses);
     } catch (error) {
       console.error("Error refreshing courses:", error);
@@ -58,7 +63,7 @@ const CourseList = () => {
       course.name?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const handleEditPress = (course) => {
+  const handleEditPress = (course: Course) => {
     setEditingCourse(course);
     setFormData({
       name: course.name,
@@ -82,7 +87,7 @@ const CourseList = () => {
     }
   };
 
-  const handleInputChange = (field, value) => {
+  const handleInputChange = (field: keyof typeof formData, value: string) => {
     setFormData(prev => ({
       ...prev,
       [field]: value
@@ -118,6 +123,7 @@ const CourseList = () => {
                 </View>
             )}
         />
+
 
         {/* Edit Modal */}
         <Modal

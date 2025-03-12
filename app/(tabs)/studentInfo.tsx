@@ -2,14 +2,21 @@ import React, { useState } from "react";
 import { Text, View, FlatList, TextInput, StyleSheet } from "react-native";
 import useFetchCollection from "@/hooks/useFetchCollection"; // Hook to fetch students
 
+interface Student {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string; // Add other properties if needed
+}
+
 const StudentsList = () => {
   const [searchQuery, setSearchQuery] = useState("");
-  const { data: students, loading, error } = useFetchCollection("students");
+  const { data: students, loading, error } = useFetchCollection<Student>("students");
 
   if (loading) return <Text>Loading...</Text>;
   if (error) return <Text>Error: {error.message}</Text>;
 
-  const filteredStudents = students.filter(student =>
+  const filteredStudents: Student[] = students.filter(student =>
     student.firstName.toLowerCase().includes(searchQuery.toLowerCase()) ||
     student.lastName.toLowerCase().includes(searchQuery.toLowerCase())
   );

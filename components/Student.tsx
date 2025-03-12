@@ -6,6 +6,7 @@ export type StudentProps = {
     email: string;
 };
 
+
 export default function Student({ firstName, lastName, email }: StudentProps) {
     // @ts-ignore
     return (
@@ -23,7 +24,7 @@ const styles = StyleSheet.create({
         padding: 10,
         marginVertical: 5,
         borderRadius: 5,
-        width: 80%
+        width: "80%"
     },
     studentName: {
         fontSize: 18,

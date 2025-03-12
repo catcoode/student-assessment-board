@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react"; // import hooks
 import { collection, getDocs } from "firebase/firestore"; // getDocs for fetching entire collection
-import { db } from "../firebase/firebaseConfig"; // database
+import { db } from "../firebase/firebaseConfig";
+import firebase from "firebase/compat";
+import DocumentData = firebase.firestore.DocumentData; // database
 
 // Define the data structure expected from Firestore
 interface FirestoreDocument {
@@ -10,16 +12,18 @@ interface FirestoreDocument {
 
 // Hook to fetch an entire collection returns it as list, error or loading (status)
 // takes in name of the collection you want to fetch
-const useFetchCollection = (collectionName: string) => {
-  const [data, setData] = useState([]); // create a list updated by setData
+
+function useFetchCollection<T = DocumentData>(collectionName: string){
+  const [data, setData] = useState<T[]>([]); // create a list updated by setData
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         const snapshot = await getDocs(collection(db, collectionName)); //get collection from database db with name collectionName
-        setData(snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }))); // map data to the list "data"
+        setData(snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() } as T)));
+ // map data to the list "data"
       } catch (err) {
         setError(err as Error); // returns error if error
       } finally {
