@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Text, View, FlatList, TextInput, StyleSheet, TouchableOpacity, Modal } from "react-native";
+import {Text, View, FlatList, TextInput, StyleSheet, TouchableOpacity, Modal, Alert} from "react-native";
 import useFetchCollection from "@/hooks/useFetchCollection"; // Hook to fetch students
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "@/firebase/firebaseConfig";
@@ -7,8 +7,8 @@ import { updateCourse, deleteCourse } from "@/firebase/courseService"; // Import
 import { CourseProps } from "@/components/Course"; // Import the CourseProps type
 import firebase from "firebase/compat";
 import DocumentData = firebase.firestore.DocumentData;
-import {Property} from "csstype";
-import ColumnRule = Property.ColumnRule; // Import the CourseProps type
+// import {Property} from "csstype";
+// import ColumnRule = Property.ColumnRule;
 
 
 interface Course extends CourseProps {
@@ -60,10 +60,14 @@ const CourseList = () => {
   if (error) return <Text>Error: {error.message}</Text>;
   if (isRefreshing) return <Text>Refreshing data...</Text>;
 
-  const filteredCourses = courseData.filter(course =>
-      course.code?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      course.name?.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredCourses: Course[] = courseData.filter(
+      (course): course is Course =>
+          typeof course.code === "string" &&
+          typeof course.name === "string" &&
+          (course.code.toLowerCase().includes(searchQuery.toLowerCase()) ||
+              course.name.toLowerCase().includes(searchQuery.toLowerCase()))
   );
+
 
   const handleEditPress = (course: Course) => {
     setEditingCourse(course);
@@ -75,7 +79,7 @@ const CourseList = () => {
     setIsEditModalVisible(true);
   };
 
-  const handleDeletePress = (course) => {
+  const handleDeletePress = (course: CourseProps & { id: string }) => {
     // Show confirmation dialog
     Alert.alert(
         "Delete Course",
@@ -135,7 +139,7 @@ const CourseList = () => {
 
         <FlatList
             data={filteredCourses}
-            keyExtractor={(item) => item.id}
+            keyExtractor={(item: CourseProps & { id: string }) => item.id}
             contentContainerStyle={styles.listContainer}
             onRefresh={refreshData}
             refreshing={isRefreshing}

@@ -44,13 +44,11 @@ const StudentsList = () => {
     try {
       const coursesCollection = collection(db, "students");
       const querySnapshot = await getDocs(coursesCollection);
-      const fetchedStudents = [];
-      querySnapshot.forEach((doc) => {
-        fetchedStudents.push({
-          id: doc.id,
-          ...doc.data()
-        });
-      });
+      const fetchedStudents: Student[] = querySnapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...(doc.data() as Omit<Student, "id">), // ✅ Type assertion
+      }));
+
       setStudentData(fetchedStudents);
     } catch (error) {
       console.error("Error refreshing courses:", error);
@@ -83,7 +81,7 @@ const StudentsList = () => {
     }
   };
 
-  const handleDeletePress = (student) => {
+  const handleDeletePress = (student: StudentProps & { id: string }) => {
     // Show confirmation dialog
     Alert.alert(
         "Delete student",
@@ -340,9 +338,5 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     minWidth: 80,
     alignItems: "center",
-  },
-  buttonText: {
-    color: "white",
-    fontWeight: "bold",
   },
 });
