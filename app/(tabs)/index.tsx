@@ -42,7 +42,7 @@ export default function HomeScreen() {
                 />
             }>
             <ThemedView style={styles.titleContainer}>
-                <ThemedText type="title">Welcome!</ThemedText>
+                <ThemedText type="title">Add Students</ThemedText>
                 <HelloWave />
             </ThemedView>
 
@@ -53,18 +53,21 @@ export default function HomeScreen() {
                     value={firstName}
                     onChangeText={setFirstName}
                     style={styles.input}
+                    placeholderTextColor="#666"
                 />
                 <TextInput
                     placeholder="Last Name"
                     value={lastName}
                     onChangeText={setLastName}
                     style={styles.input}
+                    placeholderTextColor="#666"
                 />
                 <TextInput
                     placeholder="Email"
                     value={studentEmail}
                     onChangeText={setStudentEmail}
                     style={styles.input}
+                    placeholderTextColor="#666"
                 />
                 <Button title="Add Student" onPress={handleAddStudent} />
             </ThemedView>
