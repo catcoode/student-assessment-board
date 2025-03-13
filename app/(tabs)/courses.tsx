@@ -7,12 +7,9 @@ import { ThemedView } from '@/components/ThemedView';
 import { addCourse } from '@/firebase/courseService';
 
 export default function CourseScreen() {
-
     const [name, setName] = useState('');
     const [code, setCode] = useState('');
     const [description, setDescription] = useState('');
-
-
 
     const handleAddCourse = async () => {
         const newCourse = {
@@ -21,17 +18,12 @@ export default function CourseScreen() {
             description,
         };
 
-
         await addCourse(newCourse);
 
         setName('');
         setCode('');
         setDescription('');
     };
-
-
-
-
 
     return (
         <ParallaxScrollView

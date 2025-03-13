@@ -1,15 +1,11 @@
 import React, { useState, useEffect } from "react";
 import {Text, View, FlatList, TextInput, StyleSheet, TouchableOpacity, Modal, Alert, Dimensions } from "react-native";
-import useFetchCollection from "@/hooks/useFetchCollection"; // Hook to fetch students
-import { collection, getDocs } from "firebase/firestore";
-import { db } from "@/firebase/firebaseConfig";
 import { updateCourse, deleteCourse } from "@/firebase/courseService"; // Import the updateCourse and deleteCourse functions
 import { CourseProps } from "@/components/Course"; // Import the CourseProps type
-import firebase from "firebase/compat";
-import DocumentData = firebase.firestore.DocumentData;
-
 import { BarChart } from "react-native-chart-kit";
-// interfaces to fix type errors
+import useFetchCollection from "@/hooks/useFetchCollection"; // Hook to fetch students
+
+// interfaces for proper initalization of variables
 interface Course extends CourseProps {
   id: string;
 }
@@ -32,12 +28,11 @@ const screenWidth = Dimensions.get("window").width; // get window width for grap
 const CourseList = () => {
   // hooks
   const [searchQuery, setSearchQuery] = useState("");
-  const { data: courses, loading, error } = useFetchCollection<Course>("courses");
-  const { data: grades, loading: gradesLoading, error: gradesError } = useFetchCollection<Grade>("grades");
+  const { data: courses, loading, error, refetch: refetchCourses } = useFetchCollection<Course>("courses");
+  const { data: grades, loading: gradesLoading, error: gradesError, refetch: refetchGrades } = useFetchCollection<Grade>("grades");
   const [gradeDistributions, setGradeDistributions] = useState<GradeDistributions>({});
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
   const [editingCourse, setEditingCourse] = useState<{id: string} & CourseProps | null>(null);
-  const [courseData, setCourseData] = useState<DocumentData[]>([]);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
@@ -45,7 +40,7 @@ const CourseList = () => {
     description: ""
   });
 
-  // UseEffect hooks
+  // UseEffect hook for calculating the grad distribution
   useEffect(() => {
     if (!courses || !grades || courses.length === 0 || grades.length === 0) return;
 
@@ -53,11 +48,11 @@ const CourseList = () => {
     const distributions: Record<string, Record<number, number>> = {};
 
     courses.forEach(course => {
-      distributions[course.id] = {1: 0, 2: 0, 3: 0, 4: 0, 5: 0};
+      distributions[course.id] = {1: 0, 2: 0, 3: 0, 4: 0, 5: 0}; // structuring list
     });
 
     grades.forEach(grade => {
-      if (!grade.courseId) {
+      if (!grade.courseId) { // no course id
         console.log('Found grade without courseId:', grade);
         return;
       }
@@ -66,7 +61,7 @@ const CourseList = () => {
 
       if (distributions[courseId] && grade.grade) {
         const gradeValue = parseInt(grade.grade);
-        if (gradeValue >= 1 && gradeValue <= 5) {
+        if (gradeValue >= 1 && gradeValue <= 5) { // calculating the grade distribution
           distributions[courseId][gradeValue] =
               (distributions[courseId][gradeValue] || 0) + 1;
         } else {
@@ -83,44 +78,27 @@ const CourseList = () => {
     setGradeDistributions(distributions);
   }, [courses, grades]);
 
-  useEffect(() => {
-    if (courses) {
-      setCourseData(courses);
-    }
-  }, [courses]);
-
-  // Function to manually refresh data after changes in database
+  // Function to refresh courses and grades data
   const refreshData = async () => {
     setIsRefreshing(true);
     try {
-      const coursesCollection = collection(db, "courses");
-      const querySnapshot = await getDocs(coursesCollection);
-      const fetchedCourses: Course[] = querySnapshot.docs.map(doc => ({
-        id: doc.id,  // Ensure id is included
-        ...(doc.data() as Omit<Course, "id">) // Type assertion
-      }));
-
-      setCourseData(fetchedCourses);
+      // Using the refetch methods from the hooks to refresh data
+      await Promise.all([refetchCourses(), refetchGrades()]);
     } catch (error) {
-      console.error("Error refreshing courses:", error);
+      console.error("Error refreshing data:", error);
     } finally {
       setIsRefreshing(false);
     }
   };
 
   // conditionals
-  if (loading && courseData.length === 0) return <Text>Loading...</Text>;
   if (loading || gradesLoading) return <Text>Loading...</Text>;
   if (error) return <Text>Error: {error.message}</Text>;
   if (gradesError) return <Text>Error loading grades: {gradesError.message}</Text>;
-  if (isRefreshing) return <Text>Refreshing data...</Text>;
 
-  const filteredCourses: Course[] = courseData.filter(
-      (course): course is Course =>
-          typeof course.code === "string" &&
-          typeof course.name === "string" &&
-          (course.code.toLowerCase().includes(searchQuery.toLowerCase()) ||
-              course.name.toLowerCase().includes(searchQuery.toLowerCase()))
+  const filteredCourses = courses.filter(
+      (course) =>
+          (course.code.toLowerCase().includes(searchQuery.toLowerCase()) || course.name.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
   const handleEditPress = (course: Course) => {
@@ -167,7 +145,7 @@ const CourseList = () => {
       if (updated) {
         // Close the modal and refresh the data
         setIsEditModalVisible(false);
-        if (refreshData) refreshData();
+        refreshData();
       } else {
         alert("Failed to update course");
       }
@@ -193,7 +171,7 @@ const CourseList = () => {
 
         <FlatList
             data={filteredCourses}
-            keyExtractor={(item: CourseProps & { id: string }) => item.id}
+            keyExtractor={(item) => item.id}
             contentContainerStyle={styles.listContainer}
             onRefresh={refreshData}
             refreshing={isRefreshing}
@@ -202,9 +180,6 @@ const CourseList = () => {
                   <Text style={styles.courseName}>{item.code}</Text>
                   <Text style={styles.courseName}>{item.name}</Text>
                   <Text style={styles.description}>{item.description}</Text>
-
-
-
 
                   {gradeDistributions[item.id] && (
                       <View style={styles.chartContainer}>
@@ -248,7 +223,7 @@ const CourseList = () => {
                       </View>
                   )}
 
-              
+
                   <View style={styles.buttonRow}>
                     <TouchableOpacity
                         style={styles.editButton}

@@ -1,13 +1,10 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Text, View, FlatList, TextInput, StyleSheet, Modal, TouchableOpacity } from "react-native";
 import useFetchCollection from "@/hooks/useFetchCollection";
 import { updateStudent } from "@/firebase/studentService";
 import { StudentProps } from "@/components/Student";
-import { collection, getDocs } from "firebase/firestore";
-import { db } from "@/firebase/firebaseConfig";
 import { Alert } from "react-native";
-import { deleteStudent} from "@/firebase/studentService";
-
+import { deleteStudent } from "@/firebase/studentService";
 
 interface Student {
   id: string;
@@ -18,7 +15,7 @@ interface Student {
 
 const StudentsList = () => {
   const [searchQuery, setSearchQuery] = useState("");
-  const { data: students, loading, error } = useFetchCollection<Student>("students");
+  const { data: students, loading, error, refetch } = useFetchCollection<Student>("students");
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
   const [editingStudent, setEditingStudent] = useState<StudentProps & { id: string } | null>(null);
   const [formData, setFormData] = useState({
@@ -26,32 +23,14 @@ const StudentsList = () => {
     lastName: "",
     email: ""
   });
-
-  const [studentData, setStudentData] = useState<(StudentProps & { id: string })[]>([]);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-
-  useEffect(() => {
-    if (students) {
-      setStudentData(students);
-    }
-  }, [students]);
-
-
-
-  const refreshData = async () => {
+  const handleRefresh = async () => {
     setIsRefreshing(true);
     try {
-      const coursesCollection = collection(db, "students");
-      const querySnapshot = await getDocs(coursesCollection);
-      const fetchedStudents: Student[] = querySnapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...(doc.data() as Omit<Student, "id">), // ✅ Type assertion
-      }));
-
-      setStudentData(fetchedStudents);
+      await refetch();
     } catch (error) {
-      console.error("Error refreshing courses:", error);
+      console.error("Error refreshing students:", error);
     } finally {
       setIsRefreshing(false);
     }
@@ -71,18 +50,15 @@ const StudentsList = () => {
     if (editingStudent) {
       try {
         await updateStudent(editingStudent.id, formData);
-        // Close the modal and refresh the data
         setIsEditModalVisible(false);
-        refreshData();
+        handleRefresh();
       } catch (error: any) {
-
         alert("Failed to update student: " + error.message);
       }
     }
   };
 
   const handleDeletePress = (student: StudentProps & { id: string }) => {
-
     Alert.alert(
         "Delete student",
         `Are you sure you want to delete the student "${student.firstName} ${student.lastName}"?`,
@@ -97,11 +73,9 @@ const StudentsList = () => {
             onPress: async () => {
               const deleted = await deleteStudent(student.id);
               if (deleted) {
-
-                refreshData();
+                handleRefresh();
               } else {
-
-                Alert.alert("Error", "Failed to delete course");
+                Alert.alert("Error", "Failed to delete student");
               }
             }
           }
@@ -116,13 +90,15 @@ const StudentsList = () => {
     }));
   };
 
-  if (loading) return <Text>Loading...</Text>;
+  if (loading && !isRefreshing) return <Text>Loading...</Text>;
   if (error) return <Text>Error: {error.message}</Text>;
 
-  const filteredStudents: Student[] = students.filter(student =>
-    student.firstName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    student.lastName.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredStudents = students
+      ? students.filter(student =>
+          student.firstName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          student.lastName.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+      : [];
 
   return (
       <View style={styles.container}>
@@ -158,7 +134,7 @@ const StudentsList = () => {
                 </View>
             )}
             refreshing={isRefreshing}
-            onRefresh={refreshData}
+            onRefresh={handleRefresh}
         />
 
         {/* Edit Modal */}
@@ -325,13 +301,6 @@ const styles = StyleSheet.create({
   buttonText: {
     color: "white",
     fontWeight: "bold",
-
-  },
-  buttonRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    width: "60%",
-    marginTop: 5,
   },
   deleteButton: {
     backgroundColor: "#e74c3c",

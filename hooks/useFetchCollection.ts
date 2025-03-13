@@ -1,45 +1,43 @@
-import { useState, useEffect } from "react"; // import hooks
+import { useState, useEffect, useCallback } from "react"; // import hooks
 import { collection, getDocs } from "firebase/firestore"; // getDocs for fetching entire collection
-import { db } from "../firebase/firebaseConfig";
-import firebase from "firebase/compat";
-import DocumentData = firebase.firestore.DocumentData; // database
-
-// Define the data structure expected from Firestore
-interface FirestoreDocument {
-  id: string;
-  [key: string]: any; // Allows additional fields
-}
-// Hook to fetch an entire collection returns it as list, error or loading (status)
-// takes in name of the collection you want to fetch
+import { db } from "@/firebase/firebaseConfig";
 
 function useFetchCollection<T extends { id: string }>(collectionName: string) {
   const [data, setData] = useState<T[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const snapshot = await getDocs(collection(db, collectionName));
-        const fetchedData = snapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        })) as T[]; // Explicitly cast to the correct type
+  // function to fetch collection from database
+  const fetchData = useCallback(async () => {
+    setLoading(true);
+    try {
+      const snapshot = await getDocs(collection(db, collectionName));
+      const fetchedData = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      })) as T[];
 
-        setData(fetchedData);
-      } catch (err) {
-        setError(err as Error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
+      setData(fetchedData);
+      setError(null);
+    } catch (err) {
+      setError(err as Error);
+    } finally {
+      setLoading(false);
+    }
   }, [collectionName]);
 
-  return { data, loading, error };
-}
+  // Function to manually trigger a refresh
+  const refetch = useCallback(() => {
+    setRefreshTrigger(prev => prev + 1);
+    return fetchData();
+  }, [fetchData]);
 
-// export default useFetchCollection;
+  useEffect(() => {
+    fetchData();
+  }, [fetchData, refreshTrigger]);
+
+  return { data, loading, error, refetch };
+}
 
 export default useFetchCollection;
